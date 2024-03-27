@@ -68,15 +68,17 @@ func main() {
 		}
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		t := tgbotapi.BotCommand{Command: "start", Description: "Seja bem vindo ao restaurante Sabor e Arte. Para ver as opções digite open"}
+		t := tgbotapi.BotCommand{Command: "start", Description: "Seja bem vindo ao restaurante Sabor e Arte. Para ver as opções digite /open"}
 
-		switch update.Message.Text {
+		switch update.Message.Command() {
 		case "/start":
 			msg.Text = t.Description
-		case "open":
+		case "/open":
 			msg.ReplyMarkup = menuKeyboard
-		case "close":
+		case "/close":
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+		default:
+			msg.Text = "Olá, tudo bem? Para ver as opções digite /start"
 		}
 
 		if _, err := bot.Send(msg); err != nil {
