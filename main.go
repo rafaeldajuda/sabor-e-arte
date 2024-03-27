@@ -1,20 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
+	"github.com/rafaeldajuda/sabor-e-arte-golang-telegram/entity"
 )
-
-var menu = map[string]string{
-	"1": "Menu",
-	"2": "Ver mesas disponíveis",
-	"3": "Fazer reserva",
-	"4": "Minhas reservas",
-	"5": "Cancelar reserva",
-}
 
 var menuKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
@@ -33,6 +27,33 @@ var menuKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButton("5. Cancelar reserva"),
 	),
 )
+
+var menuRestaurante entity.MenuRestaurante
+
+func init() {
+	item1 := entity.ItemMenu{
+		Nome:      "Pão de Queijo",
+		Preco:     0.99,
+		Tipo:      "Entrada",
+		Descricao: "Pão de queijo caseiro.",
+		Imagem:    []byte{},
+	}
+	item2 := entity.ItemMenu{
+		Nome:      "Arroz",
+		Preco:     5.99,
+		Tipo:      "Comida",
+		Descricao: "Arroz caseiro.",
+		Imagem:    []byte{},
+	}
+	item3 := entity.ItemMenu{
+		Nome:      "Sorvete",
+		Preco:     2.99,
+		Tipo:      "Sobremesa",
+		Descricao: "Sorvete caseiro.",
+		Imagem:    []byte{},
+	}
+	menuRestaurante = append(menuRestaurante, item1, item2, item3)
+}
 
 func main() {
 	godotenv.Load()
@@ -68,15 +89,50 @@ func main() {
 		}
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		t := tgbotapi.BotCommand{Command: "start", Description: "Seja bem vindo ao restaurante Sabor e Arte. Para ver as opções digite /open"}
+		// t := tgbotapi.BotCommand{Command: "start", Description: "Seja bem vindo ao restaurante Sabor e Arte. Para ver as opções digite /open \n\nOBS: para fechar as opções digite /close"}
 
-		switch update.Message.Command() {
-		case "/start":
-			msg.Text = t.Description
-		case "/open":
+		option := func(cmd string, msg string) string {
+			if cmd == "" {
+				return msg
+			}
+			return cmd
+		}
+
+		switch option(update.Message.Command(), update.Message.Text) {
+		case "start":
+			msg.Text = "Seja bem vindo ao restaurante Sabor e Arte. Para ver as opções digite /open \n\nOBS: para fechar as opções digite /close"
+		case "open":
 			msg.ReplyMarkup = menuKeyboard
-		case "/close":
+		case "close":
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+		case "1. Menu":
+			for _, v := range menuRestaurante {
+				text := fmt.Sprintf("Nome: %s\nPreço: %.2f\nTipo: %s\n\nDescrição: %s", v.Nome, v.Preco, v.Tipo, v.Descricao)
+				img := "./img/download.jpeg"
+				photoBytes, err := os.ReadFile(img)
+				if err != nil {
+					panic(err)
+				}
+				photoTele := tgbotapi.FileBytes{
+					Name:  "comida",
+					Bytes: photoBytes,
+				}
+
+				msg := tgbotapi.NewPhoto(update.Message.Chat.ID, photoTele)
+				msg.Caption = text
+				if _, err := bot.Send(msg); err != nil {
+					log.Panic(err)
+				}
+			}
+			continue
+		case "2. Ver mesas disponíveis":
+			msg.Text = "Ver mesas disponíveis"
+		case "3. Fazer reserva":
+			msg.Text = "Fazer reserva"
+		case "4. Minhas reservas":
+			msg.Text = "Minhas reservas"
+		case "5. Cancelar reserva":
+			msg.Text = "Cancelar reserva"
 		default:
 			msg.Text = "Olá, tudo bem? Para ver as opções digite /start"
 		}
