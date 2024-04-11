@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -8,6 +9,9 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	"github.com/rafaeldajuda/sabor-e-arte-golang-telegram/entity"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var menuKeyboard = tgbotapi.NewReplyKeyboard(
@@ -58,6 +62,51 @@ func init() {
 func main() {
 	godotenv.Load()
 
+	// mongodb
+	// Configuração do cliente do MongoDB
+	clientOptions := options.Client().ApplyURI("mongodb://admin:admin@localhost:27017")
+
+	// Conectando ao servidor do MongoDB
+	client, err := mongo.Connect(context.Background(), clientOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Verificando a conexão
+	err = client.Ping(context.Background(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Conexão com MongoDB estabelecida com sucesso!")
+
+	// Fechando a conexão com o banco de dados ao final do programa
+	defer func() {
+		if err = client.Disconnect(context.Background()); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Conexão com MongoDB encerrada.")
+	}()
+
+	// Criando um documento BSON com os dados da imagem
+	photoBytes, err := os.ReadFile("./img/download.jpeg")
+	if err != nil {
+		panic(err)
+	}
+	menuItem := bson.M{
+		"nome":      "Pão de Queijo",
+		"tipo":      "Entrada",
+		"preco":     0.99,
+		"descricao": "Pão de queijo caseiro.",
+		"img":       photoBytes,
+	}
+	collection := client.Database("dev").Collection("sabor_arte")
+	result, err := collection.InsertOne(context.Background(), menuItem)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("menu_id", result)
+
+	// bot telegram
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_TOKEN"))
 	if err != nil {
 		panic(err)
