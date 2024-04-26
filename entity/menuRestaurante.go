@@ -7,5 +7,5 @@ type ItemMenu struct {
 	Preco     float64 `json:"preco"`
 	Tipo      string  `json:"tipo"`
 	Descricao string  `json:"descricao"`
-	Imagem    []byte  `json:"imagem"`
+	Imagem    []byte  `json:"img"`
 }

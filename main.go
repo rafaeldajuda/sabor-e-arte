@@ -88,23 +88,42 @@ func main() {
 	}()
 
 	// Criando um documento BSON com os dados da imagem
-	photoBytes, err := os.ReadFile("./img/download.jpeg")
-	if err != nil {
-		panic(err)
-	}
-	menuItem := bson.M{
-		"nome":      "Pão de Queijo",
-		"tipo":      "Entrada",
-		"preco":     0.99,
-		"descricao": "Pão de queijo caseiro.",
-		"img":       photoBytes,
-	}
+	// photoBytes, err := os.ReadFile("./img/download.jpeg")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// menuItem := bson.M{
+	// 	"nome":      "Pão de Queijo",
+	// 	"tipo":      "Entrada",
+	// 	"preco":     0.99,
+	// 	"descricao": "Pão de queijo caseiro.",
+	// 	"img":       photoBytes,
+	// }
+	// collection := client.Database("dev").Collection("sabor_arte")
+	// result, err := collection.InsertOne(context.Background(), menuItem)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Println("menu_id", result)
+
+	// pegando os items
 	collection := client.Database("dev").Collection("sabor_arte")
-	result, err := collection.InsertOne(context.Background(), menuItem)
+	result, err := collection.Find(context.Background(), bson.D{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("find", err)
 	}
-	fmt.Println("menu_id", result)
+
+	for result.Next(context.Background()) {
+		raw := result.Current
+		itemMenu := entity.ItemMenu{}
+		err := bson.UnmarshalExtJSON([]byte(raw.String()), false, &itemMenu)
+		if err != nil {
+			log.Fatal("LOOP", err)
+		}
+
+		fmt.Println("item", itemMenu)
+		fmt.Println("img", itemMenu.Imagem)
+	}
 
 	// bot telegram
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_TOKEN"))
