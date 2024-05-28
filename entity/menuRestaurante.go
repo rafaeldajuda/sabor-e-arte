@@ -17,3 +17,12 @@ type ItemMenuBson struct {
 	Descricao string  `bson:"descricao"`
 	Imagem    []byte  `bson:"img"`
 }
+
+type Mesa struct {
+	Nome          string `bson:"nome"`
+	NomeCliente   string `bson:"nomeCliente"`
+	NumeroCliente string `bson:"numeroCliente"`
+	Reserva       bool   `bson:"reserva"`
+	NumeroPessoas int    `bson:"numeroPessoas"`
+	DataReserva   string `bson:"dataReserva"`
+}
