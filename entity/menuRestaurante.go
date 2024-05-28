@@ -9,3 +9,11 @@ type ItemMenu struct {
 	Descricao string  `json:"descricao"`
 	Imagem    []byte  `json:"img"`
 }
+
+type ItemMenuBson struct {
+	Nome      string  `bson:"nome"`
+	Preco     float64 `bson:"preco"`
+	Tipo      string  `bson:"tipo"`
+	Descricao string  `bson:"descricao"`
+	Imagem    []byte  `bson:"img"`
+}

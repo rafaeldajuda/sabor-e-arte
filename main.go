@@ -35,28 +35,28 @@ var menuKeyboard = tgbotapi.NewReplyKeyboard(
 var menuRestaurante entity.MenuRestaurante
 
 func init() {
-	item1 := entity.ItemMenu{
-		Nome:      "Pão de Queijo",
-		Preco:     0.99,
-		Tipo:      "Entrada",
-		Descricao: "Pão de queijo caseiro.",
-		Imagem:    []byte{},
-	}
-	item2 := entity.ItemMenu{
-		Nome:      "Arroz",
-		Preco:     5.99,
-		Tipo:      "Comida",
-		Descricao: "Arroz caseiro.",
-		Imagem:    []byte{},
-	}
-	item3 := entity.ItemMenu{
-		Nome:      "Sorvete",
-		Preco:     2.99,
-		Tipo:      "Sobremesa",
-		Descricao: "Sorvete caseiro.",
-		Imagem:    []byte{},
-	}
-	menuRestaurante = append(menuRestaurante, item1, item2, item3)
+	// item1 := entity.ItemMenu{
+	// 	Nome:      "Pão de Queijo",
+	// 	Preco:     0.99,
+	// 	Tipo:      "Entrada",
+	// 	Descricao: "Pão de queijo caseiro.",
+	// 	Imagem:    []byte{},
+	// }
+	// item2 := entity.ItemMenu{
+	// 	Nome:      "Arroz",
+	// 	Preco:     5.99,
+	// 	Tipo:      "Comida",
+	// 	Descricao: "Arroz caseiro.",
+	// 	Imagem:    []byte{},
+	// }
+	// item3 := entity.ItemMenu{
+	// 	Nome:      "Sorvete",
+	// 	Preco:     2.99,
+	// 	Tipo:      "Sobremesa",
+	// 	Descricao: "Sorvete caseiro.",
+	// 	Imagem:    []byte{},
+	// }
+	// menuRestaurante = append(menuRestaurante, item1, item2, item3)
 }
 
 func main() {
@@ -93,7 +93,7 @@ func main() {
 	// 	panic(err)
 	// }
 	// menuItem := bson.M{
-	// 	"nome":      "Pão de Queijo",
+	// 	"nome":      "Pão de Queijo Bom",
 	// 	"tipo":      "Entrada",
 	// 	"preco":     0.99,
 	// 	"descricao": "Pão de queijo caseiro.",
@@ -106,24 +106,7 @@ func main() {
 	// }
 	// fmt.Println("menu_id", result)
 
-	// pegando os items
-	collection := client.Database("dev").Collection("sabor_arte")
-	result, err := collection.Find(context.Background(), bson.D{})
-	if err != nil {
-		log.Fatal("find", err)
-	}
-
-	for result.Next(context.Background()) {
-		raw := result.Current
-		itemMenu := entity.ItemMenu{}
-		err := bson.UnmarshalExtJSON([]byte(raw.String()), false, &itemMenu)
-		if err != nil {
-			log.Fatal("LOOP", err)
-		}
-
-		fmt.Println("item", itemMenu)
-		fmt.Println("img", itemMenu.Imagem)
-	}
+	// return
 
 	// bot telegram
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_TOKEN"))
@@ -174,16 +157,17 @@ func main() {
 		case "close":
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 		case "1. Menu":
-			for _, v := range menuRestaurante {
+			items := pegarItens(client)
+			for _, v := range items {
 				text := fmt.Sprintf("Nome: %s\nPreço: %.2f\nTipo: %s\n\nDescrição: %s", v.Nome, v.Preco, v.Tipo, v.Descricao)
-				img := "./img/download.jpeg"
-				photoBytes, err := os.ReadFile(img)
-				if err != nil {
-					panic(err)
-				}
+				// img := "./img/download.jpeg"
+				// photoBytes, err := os.ReadFile(img)
+				// if err != nil {
+				// 	panic(err)
+				// }
 				photoTele := tgbotapi.FileBytes{
-					Name:  "comida",
-					Bytes: photoBytes,
+					Name:  v.Nome,
+					Bytes: v.Imagem,
 				}
 
 				msg := tgbotapi.NewPhoto(update.Message.Chat.ID, photoTele)
@@ -209,5 +193,23 @@ func main() {
 			log.Panic(err)
 		}
 	}
+}
 
+func pegarItens(client *mongo.Client) (items []entity.ItemMenuBson) {
+	// pegando os items
+	collection := client.Database("dev").Collection("sabor_arte")
+	result, err := collection.Find(context.Background(), bson.D{})
+	if err != nil {
+		log.Fatal("find", err)
+	}
+
+	for result.Next(context.Background()) {
+		itemMenuBson := entity.ItemMenuBson{}
+		result.Decode(&itemMenuBson)
+
+		fmt.Println("bson", itemMenuBson.Imagem)
+		items = append(items, itemMenuBson)
+	}
+
+	return
 }
